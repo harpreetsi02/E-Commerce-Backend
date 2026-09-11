@@ -1,4 +1,4 @@
-package com.backend.ecommercebackend;
+package com.backend.ecommercebackend.controller;
 
 import com.backend.ecommercebackend.dto.request.CategoryRequest;
 import com.backend.ecommercebackend.dto.response.CategoryResponse;
