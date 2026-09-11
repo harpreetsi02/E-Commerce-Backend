@@ -5,7 +5,6 @@ import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "category")
 public class Category {
 
     @Id
@@ -21,9 +20,6 @@ public class Category {
     protected void onCreate(){
         this.createdAt = LocalDateTime.now();
     }
-
-//    Getter and Setter
-
 
     public Long getId() {
         return id;

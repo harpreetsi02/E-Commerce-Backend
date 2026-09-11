@@ -4,7 +4,7 @@ import jakarta.validation.constraints.NotBlank;
 
 public class CategoryRequest {
 
-    @NotBlank(message = "Name must be required!")
+    @NotBlank(message = "Category name must me required!")
     private String name;
 
     public String getName() {
