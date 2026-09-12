@@ -62,9 +62,9 @@ public class ProductService {
     }
 
     @Transactional(readOnly = true)
-    public List<ProductResponse> getAllProduct(){
+    public List<ProductResponse> getAllProducts(){
 
-        return productRepository.findAll()
+        return productRepository.getAllWithCategory()
                 .stream()
                 .map(productMapper::toResponse)
                 .toList();
