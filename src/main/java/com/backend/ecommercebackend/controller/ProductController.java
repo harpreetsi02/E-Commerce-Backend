@@ -4,10 +4,13 @@ import com.backend.ecommercebackend.dto.request.ProductRequest;
 import com.backend.ecommercebackend.dto.response.ProductResponse;
 import com.backend.ecommercebackend.service.ProductService;
 import jakarta.validation.Valid;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 @RestController
@@ -61,5 +64,19 @@ public class ProductController {
         productService.deleteProduct(id);
 
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/search")
+    public ResponseEntity<Page<ProductResponse>> searchProduct(
+            @RequestParam(required = false) String name,
+            @RequestParam(required = false) Long categoryId,
+            @RequestParam(required = false) BigDecimal minPrice,
+            @RequestParam(required = false) BigDecimal maxPrice,
+            Pageable pageable
+    ) {
+        Page<ProductResponse> responses =
+                productService.searchProduct(name, categoryId, minPrice, maxPrice, pageable);
+
+        return ResponseEntity.ok(responses);
     }
 }

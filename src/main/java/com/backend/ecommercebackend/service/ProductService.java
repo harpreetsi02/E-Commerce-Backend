@@ -9,9 +9,14 @@ import com.backend.ecommercebackend.exception.ProductNotFoundException;
 import com.backend.ecommercebackend.mapper.ProductMapper;
 import com.backend.ecommercebackend.repository.CategoryRepository;
 import com.backend.ecommercebackend.repository.ProductRepository;
+import com.backend.ecommercebackend.specification.ProductSpecification;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 @Service
@@ -81,5 +86,24 @@ public class ProductService {
                 );
 
         productRepository.delete(product);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<ProductResponse> searchProduct(
+            String name,
+            Long categoryId,
+            BigDecimal minPrice,
+            BigDecimal maxPrice,
+            Pageable pageable
+    ) {
+        Specification<Product> spec = Specification
+                .where(ProductSpecification.hasName(name))
+                .and(ProductSpecification.hasCategoryId(categoryId))
+                .and(ProductSpecification.priceGreaterThanOrEqual(minPrice))
+                .and(ProductSpecification.priceLessThanEqual(maxPrice));
+
+        Page<Product> products = productRepository.findAll(spec, pageable);
+
+        return products.map(productMapper::toResponse);
     }
 }
