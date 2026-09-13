@@ -1,0 +1,121 @@
+package com.backend.ecommercebackend.service;
+
+import com.backend.ecommercebackend.dto.response.OrderResponse;
+import com.backend.ecommercebackend.entity.*;
+import com.backend.ecommercebackend.exception.CartEmptyException;
+import com.backend.ecommercebackend.exception.CartNotFoundException;
+import com.backend.ecommercebackend.exception.InsufficientStockException;
+import com.backend.ecommercebackend.exception.OrderNotFoundException;
+import com.backend.ecommercebackend.mapper.OrderMapper;
+import com.backend.ecommercebackend.repository.CartRepository;
+import com.backend.ecommercebackend.repository.OrderRepository;
+import com.backend.ecommercebackend.repository.ProductRepository;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.math.BigDecimal;
+import java.util.List;
+
+@Service
+public class OrderService {
+
+    private final OrderRepository orderRepository;
+    private final CartRepository cartRepository;
+    private final ProductRepository productRepository;
+    private final OrderMapper orderMapper;
+
+    public OrderService(
+            OrderRepository orderRepository,
+            CartRepository cartRepository,
+            ProductRepository productRepository,
+            OrderMapper orderMapper
+    ) {
+        this.orderRepository = orderRepository;
+        this.cartRepository = cartRepository;
+        this.productRepository = productRepository;
+        this.orderMapper = orderMapper;
+    }
+
+    @Transactional
+    public OrderResponse placeOrder(Long userId){
+
+        Cart cart = cartRepository.findByUserIdWithItems(userId)
+                .orElseThrow(() ->
+                        new CartNotFoundException(
+                                "Cart not found for user: " + userId
+                        )
+                );
+
+        if (cart.getItems().isEmpty()){
+            throw new CartEmptyException(
+                    "Cannot place order with an empty cart"
+            );
+        }
+
+        Order order = new Order();
+        order.setUser(cart.getUser());
+        order.setStatus(Status.PENDING);
+
+        BigDecimal totalAmount = BigDecimal.ZERO;
+
+        for (CartItem cartItem : cart.getItems()){
+
+            Product product = cartItem.getProduct();
+            int requestedQty = cartItem.getQuantity();
+
+            if (product.getStockQuantity() < requestedQty){
+                throw new InsufficientStockException(
+                        "Insufficient stock for product: " + product.getName() +
+                                ". Available: " + product.getStockQuantity() + ", Requested: " + requestedQty
+                );
+            }
+
+            product.setStockQuantity(product.getStockQuantity() - requestedQty);
+            productRepository.save(product);
+
+            OrderItem orderItem = new OrderItem();
+            orderItem.setOrder(order);
+            orderItem.setProduct(product);
+            orderItem.setQuantity(requestedQty);
+            orderItem.setPriceAtOrderTime(product.getPrice());
+
+            order.getItems().add(orderItem);
+
+            BigDecimal subtotal = product.getPrice()
+                    .multiply(BigDecimal.valueOf(requestedQty));
+            totalAmount = totalAmount.add(subtotal);
+        }
+
+        order.setTotalAmount(totalAmount);
+
+        Order savedOrder = orderRepository.save(order);
+
+        cart.getItems().clear();
+        cartRepository.save(cart);
+
+        return orderMapper.toResponse(savedOrder);
+    }
+
+    @Transactional(readOnly = true)
+    public OrderResponse getOrderById(Long id){
+
+        Order order = orderRepository.findById(id)
+                .orElseThrow(() ->
+                        new OrderNotFoundException(
+                                "Order not fount with id: " + id
+                        )
+                );
+
+        return orderMapper.toResponse(order);
+    }
+
+    @Transactional(readOnly = true)
+    public List<OrderResponse> getOrdersByUserId(Long userId){
+
+        return orderRepository.findByUserIdWithItems(userId)
+                .stream()
+                .map(orderMapper::toResponse)
+                .toList();
+    }
+}
