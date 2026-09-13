@@ -4,6 +4,7 @@ import com.backend.ecommercebackend.dto.request.CartItemRequest;
 import com.backend.ecommercebackend.dto.response.CartResponse;
 import com.backend.ecommercebackend.service.CartService;
 import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -36,7 +37,9 @@ public class CartController {
         CartResponse response =
                 cartService.addItemToCart(userId, request);
 
-        return ResponseEntity.ok(response);
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(response);
     }
 
     @DeleteMapping("/items/{cartItemId}")

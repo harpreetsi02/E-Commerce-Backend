@@ -14,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class OrderService {
@@ -36,7 +37,12 @@ public class OrderService {
     }
 
     @Transactional
-    public OrderResponse placeOrder(Long userId){
+    public OrderResponse placeOrder(Long userId, String idempotencyKey){
+
+        Optional<Order> existingOrder = orderRepository.findByIdempotencyKey(idempotencyKey);
+        if (existingOrder.isPresent()){
+            return orderMapper.toResponse(existingOrder.get());
+        }
 
         Cart cart = cartRepository.findByUserIdWithItems(userId)
                 .orElseThrow(() ->
@@ -54,6 +60,7 @@ public class OrderService {
         Order order = new Order();
         order.setUser(cart.getUser());
         order.setStatus(Status.PENDING);
+        order.setIdempotencyKey(idempotencyKey);
 
         BigDecimal totalAmount = BigDecimal.ZERO;
 

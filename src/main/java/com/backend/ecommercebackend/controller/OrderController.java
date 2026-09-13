@@ -22,10 +22,11 @@ public class OrderController {
 
     @PostMapping
     public ResponseEntity<OrderResponse> placeOrder(
-            @PathVariable Long userId
+            @PathVariable Long userId,
+            @RequestHeader("Idempotency-Key") String idempotencyKey
     ) {
         OrderResponse response =
-                orderService.placeOrder(userId);
+                orderService.placeOrder(userId, idempotencyKey);
 
         return ResponseEntity
                 .status(HttpStatus.CREATED)

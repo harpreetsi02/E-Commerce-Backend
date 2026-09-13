@@ -29,11 +29,22 @@ public class Order {
     @Column(nullable = false)
     private BigDecimal totalAmount;
 
+    @Column(unique = true)
+    private String idempotencyKey;
+
     private LocalDateTime createdAt;
 
     @PrePersist
     protected void onCreate(){
         this.createdAt = LocalDateTime.now();
+    }
+
+    public String getIdempotencyKey() {
+        return idempotencyKey;
+    }
+
+    public void setIdempotencyKey(String idempotencyKey) {
+        this.idempotencyKey = idempotencyKey;
     }
 
     public Long getId() {
