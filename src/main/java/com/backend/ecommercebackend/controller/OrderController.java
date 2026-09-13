@@ -1,7 +1,9 @@
 package com.backend.ecommercebackend.controller;
 
+import com.backend.ecommercebackend.dto.request.OrderStatusUpdateRequest;
 import com.backend.ecommercebackend.dto.response.OrderResponse;
 import com.backend.ecommercebackend.service.OrderService;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -32,7 +34,7 @@ public class OrderController {
 
     @GetMapping("/{orderId}")
     public ResponseEntity<OrderResponse> getOrderById(
-            @PathVariable Long userId,
+//            @PathVariable Long userId,
             @PathVariable Long orderId
     ) {
         OrderResponse response =
@@ -49,5 +51,17 @@ public class OrderController {
                 orderService.getOrdersByUserId(userId);
 
         return ResponseEntity.ok(responses);
+    }
+
+    @PatchMapping("/{orderId}/status")
+    public ResponseEntity<OrderResponse> updateOrderStatus(
+            @PathVariable Long orderId,
+            @Valid @RequestBody OrderStatusUpdateRequest request
+
+    ) {
+        OrderResponse response =
+                orderService.updateOrderStatus(orderId, request);
+
+        return ResponseEntity.ok(response);
     }
 }

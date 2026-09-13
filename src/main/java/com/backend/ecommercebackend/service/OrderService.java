@@ -1,11 +1,9 @@
 package com.backend.ecommercebackend.service;
 
+import com.backend.ecommercebackend.dto.request.OrderStatusUpdateRequest;
 import com.backend.ecommercebackend.dto.response.OrderResponse;
 import com.backend.ecommercebackend.entity.*;
-import com.backend.ecommercebackend.exception.CartEmptyException;
-import com.backend.ecommercebackend.exception.CartNotFoundException;
-import com.backend.ecommercebackend.exception.InsufficientStockException;
-import com.backend.ecommercebackend.exception.OrderNotFoundException;
+import com.backend.ecommercebackend.exception.*;
 import com.backend.ecommercebackend.mapper.OrderMapper;
 import com.backend.ecommercebackend.repository.CartRepository;
 import com.backend.ecommercebackend.repository.OrderRepository;
@@ -98,12 +96,12 @@ public class OrderService {
     }
 
     @Transactional(readOnly = true)
-    public OrderResponse getOrderById(Long id){
+    public OrderResponse getOrderById(Long orderId){
 
-        Order order = orderRepository.findById(id)
+        Order order = orderRepository.findById(orderId)
                 .orElseThrow(() ->
                         new OrderNotFoundException(
-                                "Order not fount with id: " + id
+                                "Order not fount with id: " + orderId
                         )
                 );
 
@@ -117,5 +115,37 @@ public class OrderService {
                 .stream()
                 .map(orderMapper::toResponse)
                 .toList();
+    }
+
+    @Transactional
+    public OrderResponse updateOrderStatus(Long orderId, OrderStatusUpdateRequest request){
+
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() ->
+                        new OrderNotFoundException(
+                                "Order not found with id: " + orderId
+                        )
+                );
+
+        Status newStatus;
+
+        try{
+            newStatus = Status.valueOf(request.getStatus().toUpperCase());
+        } catch (IllegalArgumentException e) {
+            throw new InvalidOrderStatusTransitionException(
+                    "Invalid status value: " + e.getMessage()
+            );
+        }
+
+        if (!order.getStatus().canTransitionTo(newStatus)){
+            throw new InvalidOrderStatusTransitionException(
+                    "Cannot transition order from " + order.getStatus() + " to " + newStatus
+            );
+        }
+
+        order.setStatus(newStatus);
+        Order updateOrder = orderRepository.save(order);
+
+        return orderMapper.toResponse(updateOrder);
     }
 }

@@ -202,4 +202,40 @@ public class GlobalExceptionHandler {
                 .status(HttpStatus.CONFLICT)
                 .body(response);
     }
+
+    @ExceptionHandler(InvalidOrderStatusTransitionException.class)
+    public ResponseEntity<ErrorResponse> handleInvalidOrderStatusTransition(
+            InvalidOrderStatusTransitionException exception,
+            HttpServletRequest request
+    ) {
+        ErrorResponse response = new ErrorResponse(
+                LocalDateTime.now(),
+                HttpStatus.BAD_REQUEST.value(),
+                HttpStatus.BAD_REQUEST.getReasonPhrase(),
+                exception.getMessage(),
+                request.getRequestURI()
+        );
+
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(response);
+    }
+
+//    @ExceptionHandler(IllegalArgumentException.class)
+//    public ResponseEntity<ErrorResponse> handleIllegalArgumentException(
+//            IllegalArgumentException exception,
+//            HttpServletRequest request
+//    ) {
+//        ErrorResponse response = new ErrorResponse(
+//                LocalDateTime.now(),
+//                HttpStatus.BAD_REQUEST.value(),
+//                HttpStatus.BAD_REQUEST.getReasonPhrase(),
+//                "Invalid value provided: " + exception.getMessage(),
+//                request.getRequestURI()
+//        );
+//
+//        return ResponseEntity
+//                .status(HttpStatus.BAD_REQUEST)
+//                .body(response);
+//    }
 }
